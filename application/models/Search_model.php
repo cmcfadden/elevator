@@ -620,7 +620,7 @@ class search_model extends CI_Model {
 		
     	// $this->logging->logError("params", $searchParams);
 		$queryResponse = $this->es->search($searchParams);
-    	$this->logging->logError("queryParams", $queryResponse);
+    	// $this->logging->logError("queryParams", $queryResponse);
 
     	$matchArray = array();
     	$matchArray["searchResults"] = array();
