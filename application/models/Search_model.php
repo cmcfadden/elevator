@@ -13,7 +13,8 @@ class search_model extends CI_Model {
 		parent::__construct();
 		$params= array (
     		$this->config->item('elastic'));
-		$this->es = Elasticsearch\ClientBuilder::create()->setHosts($params)->build();
+		// $this->es = Elasticsearch\ClientBuilder::create()->setHosts($params)->build();
+		$this->es = Elasticsearch\ClientBuilder::create()->setElasticCloudId("elevatordevtest:dXMtZWFzdC0xLmF3cy5mb3VuZC5pbyQzNzRhYTBiODVjZTA0NTk5YjNlMTY0NDJiYzNhNDZiNyQ1YTZlNjIxNGJiNjM0ODgxOTgyMDQyZjAwMzc4YjU0Yg==")->setBasicAuthentication('elastic', 'v4XmuEHKTJyC0wJVXl51cIC4')->build();
 
 	}
 
@@ -202,7 +203,8 @@ class search_model extends CI_Model {
     	$body = $this->cleanCharacters($body);
 
     	$params['body'] = $body;
-
+		//TODO: this should have some ... conditionals and ... checks .. and .. smarts?
+		$params['body']['fulltext'] = array_values($asset->getTextEntry(2));
 		if(isset($locationArray) && count($locationArray)>0) {
 			$params['body']['locationCache'] = $locationArray;
 		}
@@ -465,14 +467,14 @@ class search_model extends CI_Model {
 		$query = array();
 		$i=0;
 		if(preg_match("/[*]+/u", $searchArray["searchText"])) {
-			$searchParams['body']['query']['bool']['should'][$i]['wildcard'] = ["my_all"=>strtolower($searchArray["searchText"])];
+			$searchParams['body']['query']['bool']['should'][$i]['wildcard'] = ["fulltext"=>strtolower($searchArray["searchText"])];
 		}
 		else if(preg_match("/.*\\.\\.\\..*/u", $searchArray["searchText"])) {
 			list($start, $end) = explode("...", strtolower($searchArray["searchText"]));
-			$searchParams['body']['query']['bool']['should'][$i]['range'] = ["my_all" => ["gte"=>trim($start), "lte"=>trim($end)]];
+			$searchParams['body']['query']['bool']['should'][$i]['range'] = ["fulltext" => ["gte"=>trim($start), "lte"=>trim($end)]];
 		}
 		else if(substr($searchArray["searchText"],0,1) == '"' && substr($searchArray["searchText"], -1,1) == '"') {
-			$searchParams['body']['query']['bool']['should'][$i]['match_phrase'] = ["my_all"=>strtolower($searchArray["searchText"])];
+			$searchParams['body']['query']['bool']['should'][$i]['match_phrase'] = ["fulltext"=>strtolower($searchArray["searchText"])];
 		}
 		else if($searchArray["searchText"] != "") {
 
@@ -497,7 +499,8 @@ class search_model extends CI_Model {
 			$searchParams['body']['query']['bool']['should'][$i]['multi_match']['query'] = $searchArray["searchText"];
 
 			//TOOD: the intenion here is to reduce the weight of fileSearchData fields, but that isn't waht this is doing.
-			$searchParams['body']['query']['bool']['should'][$i]['multi_match']['fields'] = ["my_all"];
+			//TODO: do we really want to boost title? need to decide.
+			$searchParams['body']['query']['bool']['should'][$i]['multi_match']['fields'] = ["fulltext", "title^2", "fileSearchData^0.5"];
 			if(!$fuzzySearch) {
 				$matchType = "cross_fields";
 				if(isset($searchArray['matchType'])) {
@@ -620,7 +623,7 @@ class search_model extends CI_Model {
 		
     	// $this->logging->logError("params", $searchParams);
 		$queryResponse = $this->es->search($searchParams);
-    	// $this->logging->logError("queryParams", $queryResponse);
+    	 $this->logging->logError("queryParams", $queryResponse);
 
     	$matchArray = array();
     	$matchArray["searchResults"] = array();
@@ -682,7 +685,7 @@ class search_model extends CI_Model {
 		$searchParams = array();
 		$searchParams['index'] = $this->config->item('elasticIndex');
 		$searchParams['body']['suggest']["suggestion-finder"]["text"] = $searchTerm;
-		$searchParams['body']['suggest']["suggestion-finder"]["term"]["field"] = "my_all";
+		$searchParams['body']['suggest']["suggestion-finder"]["term"]["field"] = "fulltext";
 
 		$queryResponse = $this->es->search($searchParams);
 

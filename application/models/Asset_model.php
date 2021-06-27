@@ -532,6 +532,17 @@ class Asset_model extends CI_Model {
 
 		return $outputObject;
 	}
+	function getTextEntry($nestedDepth=false) {
+		$outputObject = array();
+		foreach($this->assetObjects as $assetKey=>$assetObject) {
+			if($assetObject->getSearchable() && $assetObject->hasContents()) {
+				$outputObject[$assetKey] = implode("\n", $assetObject->getAsText($nestedDepth));
+			}
+		}
+		$outputObject["id"] = $this->getObjectId();
+
+		return $outputObject;
+	}
 
 
 	// Build the title for the object.

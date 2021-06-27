@@ -138,7 +138,7 @@ class Related_asset_contents extends Widget_contents_base {
 
 		// TODO: check this.  nestDAta is used for two things - drawing things with nesting on the display page,
 		// as well as making sure the search engine "deep indexes" content.
-		if(($nestedObjectDepth>0 || $this->nestData == true) && !($nestedObjectDepth<0)) {
+		if(($nestedObjectDepth>0 || $this->nestData == true) && !($nestedObjectDepth<0) && $this->getRelatedAsset()) {
 
 			// decrement to prevent recusion.
 			foreach($this->getRelatedAsset()->assetObjects as $object) {
